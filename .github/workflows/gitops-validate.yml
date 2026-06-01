@@ -1,0 +1,35 @@
+name: GitOps Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-chart:
+    name: Validate Helm chart and Kubernetes config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm lint
+        run: helm lint charts/ai-tutor -f charts/ai-tutor/values-prod.yaml
+
+      - name: Render manifests
+        run: helm template ai-tutor charts/ai-tutor -f charts/ai-tutor/values-prod.yaml > rendered.yaml
+
+      - name: Trivy config scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: .
+          format: table
+          severity: CRITICAL
+          exit-code: '1'
