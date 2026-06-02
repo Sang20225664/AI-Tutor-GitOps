@@ -17,9 +17,22 @@ spec:
       labels:
         app: ai-worker
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: ai-worker
         image: {{ .Values.global.imageRegistry }}/{{ index .Values "ai-worker" "image" }}:{{ .Values.global.imageTag }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         {{- if index .Values "ai-worker" "command" }}
         command: {{ index .Values "ai-worker" "command" | toJson }}
         {{- end }}
@@ -68,12 +81,16 @@ spec:
         resources:
           {{- toYaml (index .Values "ai-worker" "resources") | nindent 10 }}
         volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         {{- if .Values.keyvault.enabled }}
         - name: secrets-store-inline
           mountPath: "/mnt/secrets-store"
           readOnly: true
         {{- end }}
       volumes:
+      - name: tmp
+        emptyDir: {}
       {{- if .Values.keyvault.enabled }}
       - name: secrets-store-inline
         csi:

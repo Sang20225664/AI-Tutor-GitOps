@@ -29,9 +29,22 @@ spec:
       labels:
         app: backend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: backend
         image: {{ .Values.global.imageRegistry }}/{{ .Values.backend.image }}:{{ .Values.global.imageTag }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         ports:
         - containerPort: {{ .Values.backend.port }}
         env:
@@ -79,12 +92,16 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 5
         volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         {{- if .Values.keyvault.enabled }}
         - name: secrets-store-inline
           mountPath: "/mnt/secrets-store"
           readOnly: true
         {{- end }}
       volumes:
+      - name: tmp
+        emptyDir: {}
       {{- if .Values.keyvault.enabled }}
       - name: secrets-store-inline
         csi:

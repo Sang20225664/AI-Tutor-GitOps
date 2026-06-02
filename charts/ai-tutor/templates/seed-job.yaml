@@ -16,9 +16,22 @@ spec:
         app: learning-seed
     spec:
       restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: learning-seed
         image: {{ .Values.global.imageRegistry }}/{{ .Values.learning.image }}:{{ .Values.global.imageTag }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         imagePullPolicy: {{ .Values.seedData.imagePullPolicy | quote }}
         command: ["node", "scripts/seedData.js"]
         env:
@@ -34,12 +47,16 @@ spec:
               name: ai-tutor-secrets
               key: MONGO_URI
         volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         {{- if .Values.keyvault.enabled }}
         - name: secrets-store-inline
           mountPath: "/mnt/secrets-store"
           readOnly: true
         {{- end }}
       volumes:
+      - name: tmp
+        emptyDir: {}
       {{- if .Values.keyvault.enabled }}
       - name: secrets-store-inline
         csi:

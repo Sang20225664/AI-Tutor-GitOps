@@ -21,9 +21,22 @@ spec:
       labels:
         app: ai-chat
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: ai-chat
         image: {{ .Values.global.imageRegistry }}/{{ index .Values "ai-chat" "image" }}:{{ .Values.global.imageTag }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+              - ALL
         ports:
         - containerPort: {{ index .Values "ai-chat" "port" }}
         env:
@@ -79,12 +92,16 @@ spec:
           periodSeconds: 10
           failureThreshold: 3
         volumeMounts:
+        - name: tmp
+          mountPath: /tmp
         {{- if .Values.keyvault.enabled }}
         - name: secrets-store-inline
           mountPath: "/mnt/secrets-store"
           readOnly: true
         {{- end }}
       volumes:
+      - name: tmp
+        emptyDir: {}
       {{- if .Values.keyvault.enabled }}
       - name: secrets-store-inline
         csi:
