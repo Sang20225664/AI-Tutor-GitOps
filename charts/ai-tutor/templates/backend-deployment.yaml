@@ -60,6 +60,8 @@ spec:
         - name: DEMO_CANARY
           value: {{ .Values.backend.env.DEMO_CANARY | quote }}
         {{- end }}
+        - name: DEMO_CANARY_FAIL
+          value: {{ .Values.backend.env.DEMO_CANARY_FAIL | default "false" | quote }}
         - name: PORT
           value: {{ .Values.backend.env.PORT | quote }}
         - name: LOG_LEVEL
