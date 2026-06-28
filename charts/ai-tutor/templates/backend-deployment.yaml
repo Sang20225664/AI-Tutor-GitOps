@@ -18,7 +18,13 @@ spec:
           stableIngress: ai-tutor-ingress
       steps:
       - setWeight: 20
-      - pause: {}
+      - analysis:
+          templates:
+          - templateName: success-rate
+          args:
+          - name: service-name
+            value: backend
+      - pause: { duration: 1m }
       - setWeight: 50
       - pause: { duration: 30s }
   selector:
