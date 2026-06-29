@@ -20,7 +20,7 @@ spec:
       - setWeight: 20
       - analysis:
           templates:
-          - templateName: success-rate
+          - templateName: canary-error-rate
           args:
           - name: service-name
             value: backend
@@ -89,7 +89,7 @@ spec:
           {{- toYaml .Values.backend.resources | nindent 10 }}
         livenessProbe:
           httpGet:
-            path: /api/ping
+            path: /health
             port: {{ .Values.backend.port }}
           initialDelaySeconds: 30
           periodSeconds: 10
