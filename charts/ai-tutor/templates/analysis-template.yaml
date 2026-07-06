@@ -16,18 +16,22 @@ spec:
       prometheus:
         address: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
         query: |
-          sum(increase(nginx_ingress_controller_requests{
-            exported_namespace="{{ .Values.global.environment }}",
-            exported_service="{{ "{{args.service-name}}" }}",
-            canary!="",
-            status=~"5.."
-          }[1m]))
-          /
-          clamp_min(
+          (
             sum(increase(nginx_ingress_controller_requests{
               exported_namespace="{{ .Values.global.environment }}",
               exported_service="{{ "{{args.service-name}}" }}",
-              canary!=""
-            }[1m])),
+              canary!="",
+              status=~"5.."
+            }[1m])) or vector(0)
+          )
+          /
+          clamp_min(
+            (
+              sum(increase(nginx_ingress_controller_requests{
+                exported_namespace="{{ .Values.global.environment }}",
+                exported_service="{{ "{{args.service-name}}" }}",
+                canary!=""
+              }[1m])) or vector(0)
+            ),
             1
           )
